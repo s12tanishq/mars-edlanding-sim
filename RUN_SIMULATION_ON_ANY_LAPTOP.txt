@@ -1,0 +1,590 @@
+AREION - COMPLETE LAPTOP SETUP AND RUNNING GUIDE
+Team Indentation - Final Build 1.0.0
+
+======================================================================
+1. PURPOSE OF THIS FILE
+======================================================================
+
+This guide explains every step needed to run AREION on a standard Windows,
+macOS, or Linux laptop using Visual Studio Code. It assumes that the person
+following it has never used Visual Studio Code, Node.js, npm, or a local web
+server before.
+
+CreatorCode is not required. AREION does not need a database, backend server,
+account, API key, paid service, or permanent internet connection.
+
+Internet access is required the first time the target laptop installs Visual
+Studio Code, Node.js, and the project packages. After installation, the
+simulation and all of its runtime images and 3D models work locally.
+
+This guide applies to normal Windows 10/11, recent macOS, and desktop Linux
+systems. A tablet, phone, or stock Chromebook is not covered. A school or work
+laptop may require an administrator to approve software installation.
+
+
+======================================================================
+2. WHAT MUST BE COPIED TO THE LAPTOP
+======================================================================
+
+The complete AREION project folder on the original Mac is:
+
+/Users/tanishqpachghare/Documents/Codex/2026-09-26/3-3d-scene-rendering-takes-physics/outputs/mars-edl-perseverance
+
+The folder may be transferred with a USB drive, AirDrop, cloud storage, a ZIP
+file, or a source-control repository. Its location on the new laptop does not
+have to match the path above.
+
+The copied folder must contain at least all of the following:
+
+  mars-edl-perseverance/
+    package.json
+    package-lock.json
+    index.html
+    vite.config.js
+    README.md
+    submission.md
+    src/
+    public/
+    scripts/
+    tests/
+    docs/
+
+The public/ folder is mandatory. It contains the rover models, Mars panorama,
+terrain textures, and model decoder. A copy without public/ will open but the
+important visual assets will fail.
+
+Do not transfer the node_modules folder between computers or operating
+systems. It contains generated, platform-specific packages. The receiving
+laptop will create its own node_modules folder by running npm ci.
+
+The dist folder is generated output and is optional when transferring the
+source. It will be recreated by npm run build.
+
+After downloading a ZIP:
+
+Windows:
+  1. Right-click the ZIP file.
+  2. Choose Extract All.
+  3. Select a normal writable location such as Documents.
+  4. Open the extracted folder, not the ZIP preview.
+
+macOS:
+  1. Double-click the ZIP file in Finder.
+  2. Move the extracted folder to Documents or another writable location.
+
+Linux:
+  1. Use the file manager's Extract option.
+  2. Extract it to Documents, Home, or another writable location.
+
+Some ZIP tools create two folders with the same name nested inside each other.
+The correct folder to open in VS Code is the one that directly contains
+package.json.
+
+
+======================================================================
+3. BASIC LAPTOP REQUIREMENTS
+======================================================================
+
+Required:
+
+  - A 64-bit Windows, macOS, or desktop Linux installation.
+  - At least 250 MB of free disk space after downloading the source.
+  - 4 GB of system memory; 8 GB or more is recommended.
+  - A graphics processor and driver that support WebGL 2.
+  - Browser hardware acceleration enabled.
+  - A current version of Chrome, Edge, or Firefox.
+  - Visual Studio Code.
+  - Node.js compatible with Vite 7.
+
+Supported Node.js versions for this exact project are:
+
+  - Node.js 20.19.0 or newer within the Node 20 series, or
+  - Node.js 22.12.0 or newer, including Node.js 24.
+
+Node.js 22.12 or a current Node.js LTS release is a safe choice. Do not use
+Node.js 18 or an early Node.js 20 release for this project.
+
+
+======================================================================
+4. INSTALL VISUAL STUDIO CODE
+======================================================================
+
+If Visual Studio Code is already installed, open it and continue to section 5.
+
+1. Open a web browser.
+2. Visit:
+
+   https://code.visualstudio.com/Download
+
+3. Download the installer for the laptop's operating system.
+
+Windows:
+  - Choose the Windows User Installer for the laptop's processor.
+  - Most Windows laptops use x64.
+  - Run the downloaded installer.
+  - Keep the normal options selected.
+  - Adding "Open with Code" and adding Code to PATH are useful but optional.
+
+macOS:
+  - Choose the build matching the Mac: Apple silicon for M-series Macs or Intel
+    for older Intel Macs. The Universal download also works on both.
+  - Open the downloaded archive.
+  - Drag Visual Studio Code into Applications.
+  - Start it from Applications.
+
+Linux:
+  - Use the official .deb package for Debian/Ubuntu, the .rpm package for
+    Fedora-family systems, or the package recommended for the distribution.
+  - Install it using the system's normal software installer.
+
+No optional VS Code extension is required to run AREION.
+
+
+======================================================================
+5. INSTALL NODE.JS AND NPM
+======================================================================
+
+Node.js runs the local development tools. npm is installed automatically with
+Node.js and downloads the packages listed in package-lock.json.
+
+1. Open a web browser.
+2. Visit:
+
+   https://nodejs.org/en/download
+
+3. Download a current LTS version that meets the version requirement in
+   section 3. Use the normal installer for the laptop's operating system.
+4. Run the installer and keep npm selected.
+5. Finish the installation.
+6. Completely close and reopen Visual Studio Code. This lets VS Code detect the
+   newly installed node and npm commands.
+
+Do not download Node.js from an unofficial mirror. Do not install React,
+Three.js, or Vite globally; npm will install the exact project versions later.
+
+
+======================================================================
+6. VERIFY NODE.JS AND NPM
+======================================================================
+
+1. Open Visual Studio Code.
+2. From the top menu choose Terminal, then New Terminal.
+3. A terminal panel opens at the bottom of VS Code.
+4. Type the following command and press Enter:
+
+   node --version
+
+5. A valid result looks similar to v22.12.0 or v24.x.x.
+6. Then run:
+
+   npm --version
+
+7. This should print a number without an error.
+
+If either command says "not found", "not recognized", or something similar:
+
+  - Close every VS Code window.
+  - Confirm that Node.js installation finished successfully.
+  - Reopen VS Code and try again.
+  - If the computer is managed by a school or employer, ask its administrator
+    to make Node.js available in the system PATH.
+
+Windows PowerShell may sometimes block npm.ps1 because of its execution policy.
+Do not weaken the computer's security policy. In VS Code, use Terminal -> New
+Terminal, select Command Prompt as the terminal profile, and run the commands
+there. Alternatively, replace npm with npm.cmd in every command, for example:
+
+   npm.cmd ci
+
+
+======================================================================
+7. OPEN THE CORRECT PROJECT FOLDER IN VS CODE
+======================================================================
+
+1. Start Visual Studio Code.
+2. Select File -> Open Folder.
+3. Find the transferred mars-edl-perseverance folder.
+4. Select the folder that directly contains package.json.
+5. Click Open.
+6. If VS Code asks whether the folder's authors are trusted, confirm only if
+   the folder came from Team Indentation or another trusted team member.
+
+The Explorer at the left should show package.json, src, public, tests, and docs
+at the same level.
+
+Do not open only src. Do not open dist. Do not open index.html by itself.
+
+Open Terminal -> New Terminal. Because VS Code opened the correct folder, the
+new terminal should already be located at the project root.
+
+To confirm, run:
+
+Windows Command Prompt:
+
+   dir package.json
+
+macOS or Linux terminal:
+
+   ls package.json
+
+The command should list package.json. If it says that the file cannot be found,
+return to File -> Open Folder and select the correct directory.
+
+
+======================================================================
+8. INSTALL THE PROJECT PACKAGES
+======================================================================
+
+The first package installation requires an internet connection.
+
+In the VS Code terminal, run:
+
+   npm ci
+
+Use npm ci, not npm install, for the first setup. npm ci uses package-lock.json
+to install the versions tested with this build:
+
+  - React 19.1.1
+  - React DOM 19.1.1
+  - Three.js 0.180.0
+  - Vite 7.1.7
+
+Wait until the terminal returns to a prompt. A new node_modules folder will be
+created. Normal informational lines about package funding are not errors.
+
+If node_modules was accidentally copied from another computer and npm ci fails:
+
+  1. Confirm that VS Code is open at mars-edl-perseverance.
+  2. In the VS Code Explorer, locate only the node_modules item inside this
+     project folder.
+  3. Delete that node_modules item. Do not delete src, public, or the project
+     folder.
+  4. Run npm ci again while connected to the internet.
+
+Never use sudo npm ci. Administrator-level npm commands can create file
+ownership problems and are not needed for this project.
+
+
+======================================================================
+9. START THE SIMULATION
+======================================================================
+
+In the VS Code terminal, run exactly:
+
+   npm run dev -- --port 5174 --strictPort
+
+When it starts successfully, the terminal prints a Local address similar to:
+
+   http://127.0.0.1:5174/
+
+Open Chrome, Edge, or Firefox and enter this address:
+
+   http://127.0.0.1:5174/
+
+127.0.0.1 means "this laptop." The simulation is not being published to the
+internet. Keep the VS Code terminal running while using the simulation.
+
+If the operating system displays a firewall question, the server only needs
+local/private access. Public-network access is unnecessary.
+
+Do not double-click index.html. AREION uses JavaScript modules, a Web Worker,
+models, and textures that must be served by the local Vite server.
+
+
+======================================================================
+10. BASIC SIMULATION WALKTHROUGH
+======================================================================
+
+1. The browser opens on the orbital mission briefing.
+2. Keep "Nominal entry" selected for the first run.
+3. Optionally choose Inspect rover to check the model.
+4. Select Begin entry.
+5. The flight is autonomous. There are no manual steering, parachute, or engine
+   deployment buttons.
+6. Observe the heat shield and wake during entry, parachute deployment, and
+   rocket plumes during powered descent.
+7. Watch the three live graphs and the persistent trajectory.
+8. Use Pause, Resume, playback speed, camera, orbit, and zoom controls as
+   desired.
+9. Open Mission Control for detailed telemetry.
+10. At touchdown, review vertical speed, target error, peak G-force, and fuel.
+
+For later runs, try Dust storm front, High wind shear, Sensor interruption, or
+Engine degradation. Fuel contingency intentionally crashes because it starts
+with insufficient fuel; that is expected behavior, not a software fault.
+
+
+======================================================================
+11. STOP AND RESTART THE SIMULATION
+======================================================================
+
+To stop the local server:
+
+1. Click inside the VS Code terminal running the server.
+2. Hold the Control key and press C once: Ctrl+C.
+3. If asked to confirm termination, answer Y or Yes.
+
+Closing only the browser tab does not always stop the server.
+
+To run AREION again later:
+
+1. Open the mars-edl-perseverance folder in VS Code.
+2. Open Terminal -> New Terminal.
+3. Run:
+
+   npm run dev -- --port 5174 --strictPort
+
+4. Open http://127.0.0.1:5174/.
+
+npm ci normally needs to be run only once on that laptop, unless node_modules
+is deleted or package.json/package-lock.json changes.
+
+
+======================================================================
+12. RUN THE FINAL PRODUCTION BUILD LOCALLY
+======================================================================
+
+Development mode is simplest for editing and demonstrations. To verify and run
+the optimized final production build instead:
+
+1. Stop any running server with Ctrl+C.
+2. Run:
+
+   npm run build
+
+3. Wait for a successful message ending with "built in". The generated files
+   are placed in dist.
+4. Start the production preview:
+
+   npm run preview -- --port 4173 --strictPort
+
+5. Open:
+
+   http://127.0.0.1:4173/
+
+6. Stop it with Ctrl+C when finished.
+
+The warning that a Three.js chunk is larger than 500 kB is informational. It is
+not a failed build. A real failure includes words such as error, failed, or a
+non-zero exit code.
+
+The dist folder still requires a web server. Do not double-click
+dist/index.html.
+
+
+======================================================================
+13. OPTIONAL VERIFICATION BEFORE A PRESENTATION
+======================================================================
+
+Run the automated test suite:
+
+   npm test
+
+The expected final line includes:
+
+   tests 26
+   pass 26
+   fail 0
+
+Run a mission without opening the 3D browser interface:
+
+   npm run simulate -- nominal
+
+Other accepted scenario names are:
+
+   gusts
+   storm
+   sensor
+   engine
+   fuel
+
+For example:
+
+   npm run simulate -- storm
+
+The fuel scenario is designed to report failure. The other supplied default
+scenarios should land within the documented limits.
+
+Recommended presentation-day preparation:
+
+  1. Connect the laptop to power.
+  2. Close unnecessary games, video editors, and browser tabs.
+  3. Enable browser hardware acceleration.
+  4. Run npm ci while internet is available if this is a new laptop.
+  5. Run npm test and npm run build.
+  6. Start the production preview and complete one nominal flight.
+  7. Confirm the rover, sky, terrain, charts, heat effects, parachute, plumes,
+     and result screen all appear.
+  8. After this preparation, the simulation itself can run without internet.
+
+
+======================================================================
+14. COMMON PROBLEMS AND EXACT FIXES
+======================================================================
+
+PROBLEM: node or npm is not recognized.
+
+  Cause: Node.js is missing, too old, or VS Code was open during installation.
+  Fix: Install a supported Node.js version, fully restart VS Code, and repeat
+  node --version and npm --version.
+
+
+PROBLEM: Vite says the Node.js version is unsupported.
+
+  Cause: The installed Node.js version is older than 20.19.0 or is an early
+  Node 20/22 release.
+  Fix: Install Node.js 22.12.0 or newer, restart VS Code, and rerun npm ci.
+
+
+PROBLEM: npm says package.json cannot be found.
+
+  Cause: VS Code opened src, dist, or the wrong enclosing folder.
+  Fix: Use File -> Open Folder and select the folder that directly contains
+  package.json.
+
+
+PROBLEM: npm ci cannot download packages.
+
+  Cause: No internet, a proxy/firewall restriction, or npm registry access is
+  blocked.
+  Fix: Confirm internet access, try a normal unrestricted network, or ask the
+  network administrator to permit the official npm registry. Do not download
+  random copies of node_modules from file-sharing sites.
+
+
+PROBLEM: PowerShell says running scripts is disabled.
+
+  Cause: Windows PowerShell execution policy blocks npm.ps1.
+  Fix: Open a Command Prompt terminal profile in VS Code and use npm there, or
+  use npm.cmd instead of npm. Do not change organization security policy.
+
+
+PROBLEM: Port 5174 is already in use.
+
+  Cause: Another development server is running.
+  Fix: Stop the old server with Ctrl+C. If it cannot be found, start AREION on
+  another port:
+
+   npm run dev -- --port 5175 --strictPort
+
+  Then open http://127.0.0.1:5175/.
+
+
+PROBLEM: The page is blank or opening index.html shows errors.
+
+  Cause: The file was opened directly instead of through Vite, or the build did
+  not start correctly.
+  Fix: Run npm run dev and open the exact http://127.0.0.1 address printed by
+  the terminal. Never use a file:/// address.
+
+
+PROBLEM: The interface appears but the rover, terrain textures, or Mars sky is
+missing.
+
+  Cause: public/assets or public/draco was not copied, or a download/extraction
+  removed large files.
+  Fix: Restore the complete public folder from the original project. Confirm it
+  contains public/assets/perseverance-flight.glb,
+  public/assets/mars-panorama.jpg, terrain images, and public/draco files.
+
+
+PROBLEM: The browser reports a WebGL error or the view is black.
+
+  Cause: Hardware acceleration is disabled, the graphics driver is outdated,
+  or remote-desktop software is preventing WebGL.
+  Fix: Enable hardware acceleration in the browser, restart the browser, update
+  the laptop's graphics driver through the operating-system/vendor updater, and
+  try Chrome or Edge directly on the laptop rather than through remote desktop.
+
+
+PROBLEM: The frame rate is low.
+
+  Fix:
+    - Connect the laptop to power and disable battery-saver mode.
+    - Close other graphics-heavy programs and browser tabs.
+    - Use the default optimized flight rover instead of Detailed rover.
+    - Keep browser zoom near 100 percent.
+    - Use a current Chrome or Edge version with hardware acceleration enabled.
+
+
+PROBLEM: The secondary Mission Control station says it is waiting or stale.
+
+  Cause: The primary simulation tab is closed, paused for too long, or the
+  second station was opened in a different browser/profile.
+  Fix: Keep the primary tab open and open the second station in the same browser
+  profile. This feature is local to one browser and is not a networked remote
+  station.
+
+
+PROBLEM: A test or build command fails after files were edited.
+
+  Fix: Save all files, run npm ci again, then run npm test and npm run build.
+  If it still fails, preserve the complete terminal error message for the team.
+
+
+======================================================================
+15. QUICK COMMAND REFERENCE
+======================================================================
+
+Check installed tools:
+
+   node --version
+   npm --version
+
+Install exact project packages:
+
+   npm ci
+
+Run the editable development preview:
+
+   npm run dev -- --port 5174 --strictPort
+
+Development address:
+
+   http://127.0.0.1:5174/
+
+Run tests:
+
+   npm test
+
+Build the final production version:
+
+   npm run build
+
+Preview the production build:
+
+   npm run preview -- --port 4173 --strictPort
+
+Production-preview address:
+
+   http://127.0.0.1:4173/
+
+Run a headless nominal mission:
+
+   npm run simulate -- nominal
+
+Stop any running local server:
+
+   Ctrl+C
+
+
+======================================================================
+16. FINAL CHECKLIST
+======================================================================
+
+Before declaring the laptop ready, confirm every item below:
+
+  [ ] The complete project folder was extracted to a writable location.
+  [ ] VS Code opens the folder containing package.json, not src or dist.
+  [ ] node --version reports a supported version.
+  [ ] npm --version reports successfully.
+  [ ] npm ci completed successfully on this laptop.
+  [ ] npm test reports 26 passed and 0 failed.
+  [ ] npm run build completed successfully.
+  [ ] The localhost address opens in a modern browser.
+  [ ] The briefing and Team Indentation branding appear.
+  [ ] Rover, Mars sky, terrain textures, and charts load.
+  [ ] A nominal autonomous flight reaches the result screen.
+  [ ] The server can be stopped with Ctrl+C.
+
+Once these checks pass, AREION is ready to run locally on that laptop.
