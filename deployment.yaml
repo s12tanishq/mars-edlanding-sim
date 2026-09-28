@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: areion-react
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: areion-react
+  template:
+    metadata:
+      labels:
+        app: areion-react
+    spec:
+      containers:
+        - name: web
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
