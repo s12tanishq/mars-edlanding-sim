@@ -197,6 +197,7 @@ export function createLander(manager, onAsset) {
     if (o.material) {
       o.material = o.material.clone();
       o.material.transparent = true;
+      o.material.opacity = 1;
     }
   });
   let stageY = 2.9;
@@ -244,15 +245,14 @@ export function createLander(manager, onAsset) {
         stage.rotation.z = -Math.min(0.5, endAge * 0.18);
       } else stage.rotation.z = 0;
       stage.visible = !preview && powerAge !== null && (!terminal || endAge < 4.5);
-      stage.traverse((o) => {
-        if (o.material) o.material.opacity = 1;
-      });
       cables.visible = stage.visible && !terminal;
       for (let i = 0; i < 3; i++) {
         const a = (i * Math.PI * 2) / 3,
           x = Math.cos(a) * 0.85,
           z = Math.sin(a) * 0.65;
-        cablePos.set([x, 1.3, z, x * 1.35, stageY + 0.1, z * 1.35], i * 6);
+        const j=i*6;
+        cablePos[j]=x;cablePos[j+1]=1.3;cablePos[j+2]=z;
+        cablePos[j+3]=x*1.35;cablePos[j+4]=stageY+.1;cablePos[j+5]=z*1.35;
       }
       cables.geometry.attributes.position.needsUpdate = true;
       cables.material.opacity = 0.8;
@@ -264,7 +264,8 @@ export function createLander(manager, onAsset) {
     get stageY() {
       return stage.position.y;
     },
-    get renderBudget(){return optimizedModel?{triangles:46809,drawCalls:118}:flightModel.userData;},
+    get assetStatus(){return optimizedModel?"Optimized NASA rover ready":"Flight rover ready";},
+    get renderBudget(){return detailedModel?.visible?{triangles:199521,drawCalls:252}:optimizedModel?{triangles:46809,drawCalls:118}:flightModel.userData;},
     dispose() {
       disposed = true;
       decoder.dispose();

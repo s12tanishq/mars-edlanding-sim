@@ -2,6 +2,10 @@ import * as THREE from "three";
 export function createHeatTrail(){
   const group=new THREE.Group(),count=700,pos=new Float32Array(count*3),ages=new Float32Array(count),seeds=new Float32Array(count);
   for(let i=0;i<count;i++){ages[i]=i/count;seeds[i]=(Math.sin(i*127.1)*43758.54)%1;}
+  // Keep double precision and the original angle expression; these never change.
+  const cosines=new Float64Array(count),sines=new Float64Array(count);
+  for(let i=0;i<count;i++){const angle=i*2.39996+seeds[i];cosines[i]=Math.cos(angle);sines[i]=Math.sin(angle);}
+  const rel=new THREE.Vector3(),side=new THREE.Vector3(),across=new THREE.Vector3();
   const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(pos,3));geo.setAttribute("age",new THREE.BufferAttribute(ages,1));
   const material=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,uniforms:{heat:{value:0},pixelRatio:{value:1}},vertexShader:`attribute float age;varying float a;uniform float pixelRatio;void main(){a=age;vec4 p=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*p;gl_PointSize=clamp((220.+a*500.)*pixelRatio/max(1.,-p.z),2.,100.);}`,fragmentShader:`varying float a;uniform float heat;void main(){float r=length(gl_PointCoord-.5)*2.;float glow=exp(-r*r*4.)*(1.-smoothstep(.7,1.,r));vec3 c=mix(vec3(1.,.75,.24),vec3(.9,.055,.007),a);gl_FragColor=vec4(c,glow*heat*(1.-a)*.20);}`});
   const particles=new THREE.Points(geo,material);particles.frustumCulled=false;group.add(particles);
@@ -13,13 +17,13 @@ export function createHeatTrail(){
     const heat=preview||state.phase!=="aerobraking"?0:Math.min(1,state.heatFlux/9000);
     group.visible=heat>.001;if(!group.visible)return;group.position.copy(position);material.uniforms.heat.value=heat;material.uniforms.pixelRatio.value=pixelRatio;haloMat.uniforms.heat.value=heat;
     wakeMaterial.uniforms.heat.value=heat;wakeMaterial.uniforms.clock.value=frame.clock;
-    const rel=new THREE.Vector3(wind.x-state.velocity.x,wind.y-state.velocity.y,wind.z-state.velocity.z),speed=rel.length();rel.normalize();
-    const side=new THREE.Vector3(1,0,0),across=new THREE.Vector3().crossVectors(rel,side).normalize();side.crossVectors(across,rel).normalize();
+    rel.set(wind.x-state.velocity.x,wind.y-state.velocity.y,wind.z-state.velocity.z);const speed=rel.length();rel.normalize();
+    side.set(1,0,0);across.crossVectors(rel,side).normalize();side.crossVectors(across,rel).normalize();
     for(let i=0;i<count;i++){
-      const a=(i/count+frame.clock*.75)%1,angle=i*2.39996+seeds[i],radius=2.4+a*(2+heat*4),length=a*(7+speed*.012);
-      pos[i*3]=rel.x*length+(side.x*Math.cos(angle)+across.x*Math.sin(angle))*radius;
-      pos[i*3+1]=.3+rel.y*length+(side.y*Math.cos(angle)+across.y*Math.sin(angle))*radius;
-      pos[i*3+2]=rel.z*length+(side.z*Math.cos(angle)+across.z*Math.sin(angle))*radius;ages[i]=a;
+      const a=(i/count+frame.clock*.75)%1,radius=2.4+a*(2+heat*4),length=a*(7+speed*.012);
+      pos[i*3]=rel.x*length+(side.x*cosines[i]+across.x*sines[i])*radius;
+      pos[i*3+1]=.3+rel.y*length+(side.y*cosines[i]+across.y*sines[i])*radius;
+      pos[i*3+2]=rel.z*length+(side.z*cosines[i]+across.z*sines[i])*radius;ages[i]=a;
     }
     geo.attributes.position.needsUpdate=true;geo.attributes.age.needsUpdate=true;
   }};

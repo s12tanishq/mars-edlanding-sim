@@ -41,8 +41,11 @@ export function createRocketPlume() {
     return m;
   });
   let displayed = 0;
+  const angles=new Float64Array(count);
+  for(let i=0;i<count;i++)angles[i]=((Math.sin(i*127.1)*43758.5453)%1)*Math.PI*2;
   return {
     group,
+    reset(){displayed=0;group.visible=false;},
     update(state, throttle, frame, wind, stageY, pixelRatio = 1) {
       const target =
         state.phase === "poweredDescent" && state.fuel > 0
@@ -64,22 +67,15 @@ export function createRocketPlume() {
         core.scale.y = 0.4 + displayed * 4;
         core.position.y = -core.scale.y / 2;
       });
+      const length = 0.7 + displayed * 7;
       for (let i = 0; i < count; i++) {
         const engine = ENGINES[i % 8],
           age = (Math.floor(i / 8) / 80 + frame.clock * 2.1) % 1;
-        const length = 0.7 + displayed * 7,
-          spread = (0.08 + age * 0.6) * displayed,
-          a =
-            ((Math.sin(i * 127.1) * 43758.5453) % 1) * Math.PI * 2 +
-            frame.clock * 0.2;
-        positions.set(
-          [
-            engine[0] + Math.cos(a) * spread + wind.x * 0.004 * age * age,
-            -age * length,
-            engine[2] + Math.sin(a) * spread + wind.z * 0.004 * age * age,
-          ],
-          i * 3,
-        );
+        const spread = (0.08 + age * 0.6) * displayed,
+          a = angles[i] + frame.clock * 0.2;
+        positions[i*3]=engine[0]+Math.cos(a)*spread+wind.x*0.004*age*age;
+        positions[i*3+1]=-age*length;
+        positions[i*3+2]=engine[2]+Math.sin(a)*spread+wind.z*0.004*age*age;
         alpha[i] = Math.sin(Math.PI * age) ** 1.2;
       }
       geometry.attributes.position.needsUpdate = true;

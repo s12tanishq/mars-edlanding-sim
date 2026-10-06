@@ -11,6 +11,7 @@ import { createMarsSky } from "./MarsSky.js";
 import { createDust } from "./Dust.js";
 import {createHeatTrail} from "./HeatTrail.js";
 import { createOrbitalMars } from "./OrbitalMars.js";
+import {createSceneWarmup} from "./warmup.js";
 import {
   createJezeroDetailTexture,
   createJezeroOrbitalTexture,
@@ -35,8 +36,8 @@ export default function Scene({
   detailed=false,
 }) {
   const host = useRef(null),
-    props = useRef({ cameraMode, briefing, running, onAsset,onPerformance,detailed });
-  props.current = { cameraMode, briefing, running, onAsset,onPerformance,detailed };
+    props = useRef({ cameraMode, briefing, running, onAsset,onPerformance,detailed,runId });
+  props.current = { cameraMode, briefing, running, onAsset,onPerformance,detailed,runId };
   const [error, setError] = useState(null);
   useEffect(() => {
     const container = host.current;
@@ -59,6 +60,8 @@ export default function Scene({
     renderer.toneMappingExposure = 1.12;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // Include shadow and transmission passes in the per-frame counters.
+    renderer.info.autoReset=false;
     renderer.domElement.setAttribute(
       "aria-label",
       "Live 3D Perseverance-inspired Mars scene. Drag to orbit; scroll to zoom.",
@@ -74,6 +77,7 @@ export default function Scene({
     world.background = new THREE.Color("#a58160");
     world.fog = new THREE.FogExp2("#ab8a68", 0.000045);
     const camera = new THREE.PerspectiveCamera(43, 1, 0.25, 2000000);
+    const createControls=()=>{
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.07;
@@ -81,6 +85,9 @@ export default function Scene({
     controls.minDistance = 4.8;
     controls.maxDistance = 2500000;
     controls.maxPolarAngle = Math.PI * 0.49;
+    return controls;
+    };
+    let controls=createControls();
     const pmrem = new THREE.PMREMGenerator(renderer),
       room = new RoomEnvironment();
     const env = pmrem.fromScene(room, 0.04);
@@ -149,12 +156,15 @@ export default function Scene({
       desired = new THREE.Quaternion(),
       up = new THREE.Vector3(0, 1, 0),
       direction = new THREE.Vector3();
+    const scratch=new THREE.Vector3(),crashRotation=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),.65);
     let previousWall = performance.now(),
       previousMode = null,
       previousIntro = null,
       cameraHeight = 1.2,
       modeAge = 0;
     let statsStart=performance.now(),statsFrames=0,submitTime=0;
+    const frameTimes=[];
+    let activeRun=props.current.runId;
     const startOffset = new THREE.Vector3(),
       endOffset = new THREE.Vector3();
     let movingCamera = false,
@@ -179,10 +189,23 @@ export default function Scene({
       automaticFraming = false;
     };
     controls.addEventListener("start", endCameraMove);
+    const warmup=createSceneWarmup(renderer,world,sun,[marsGlobalMap,jezeroOrbitalMap,jezeroDetailMap],()=>props.current.briefing);
+    manager.onLoad=()=>warmup.request();
+    const resetMission=now=>{
+      timeline.reset();chute.reset();plume.reset();dust.reset();trail.reset();orbitalMars.reset();
+      craft.position.set(0,0,0);attitude.quaternion.identity();desired.identity();
+      controls.dispose();camera.position.set(0,0,0);camera.quaternion.identity();camera.zoom=1;camera.far=2000000;
+      controls=createControls();controls.addEventListener("start",endCameraMove);
+      previousMode=null;previousIntro=null;cameraHeight=1.2;modeAge=0;movingCamera=false;automaticFraming=true;
+      previousWall=now;statsStart=now;statsFrames=0;submitTime=0;frameTimes.length=0;
+      props.current.onAsset?.(lander.assetStatus);
+    };
     renderer.setAnimationLoop((now) => {
       const renderStart=performance.now();
       const snapshot = live.current;
       if (!snapshot) return;
+      if(activeRun!==props.current.runId){activeRun=props.current.runId;resetMission(now);}
+      const frameMs=Math.max(0,now-previousWall);
       const wallDt = Math.min(0.05, Math.max(0, (now - previousWall) / 1000));
       previousWall = now;
       const { briefing: preview, cameraMode: mode } = props.current;
@@ -238,8 +261,8 @@ export default function Scene({
         direction.set((wind.x-state.velocity.x)*.003,1,(wind.z-state.velocity.z)*.003).normalize();
         desired.setFromUnitVectors(up,direction);
       } else if(snapshot.complete) {
-        const n=terrainNormal(state.position.x,state.position.z);desired.setFromUnitVectors(up,new THREE.Vector3(n.x,n.y,n.z));
-        if(state.phase==="crashed")desired.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),.65));
+        const n=terrainNormal(state.position.x,state.position.z);desired.setFromUnitVectors(up,scratch.set(n.x,n.y,n.z));
+        if(state.phase==="crashed")desired.multiply(crashRotation);
       } else desired.identity();
       // Tilt is the commanded direction, not a six-DoF attitude solution.
       attitude.quaternion.slerp(desired, 1 - Math.exp(-5 * frame.dt));
@@ -268,10 +291,10 @@ export default function Scene({
       if(orbital)target.set(0,-3389500,0);
       else if (overview) target.set(0, 16000, 0);
       else
-        target.copy(craft.position).add(new THREE.Vector3(0, cameraHeight, 0));
+        target.copy(craft.position).add(scratch.set(0, cameraHeight, 0));
       if (previousMode === null) {
         controls.target.copy(target);
-        camera.position.copy(target).add(new THREE.Vector3(6, 3.5, 7.5));
+        camera.position.copy(target).add(scratch.set(6, 3.5, 7.5));
       }
       if (mode !== previousMode || preview !== previousIntro) {
         resize();
@@ -300,7 +323,7 @@ export default function Scene({
         modeAge += wallDt;
         camera.position
           .copy(target)
-          .add(startOffset.clone().lerp(endOffset, ease(modeAge / 1.1)));
+          .add(scratch.copy(startOffset).lerp(endOffset, ease(modeAge / 1.1)));
         if (modeAge >= 1.1) movingCamera = false;
       }
       if (automaticFraming && !movingCamera && !overview && !preview) {
@@ -348,7 +371,7 @@ export default function Scene({
         sun.position.set(-5500000,1800000,3200000);
         sun.target.position.set(0,-3389500,0);
       }else{
-        sun.position.copy(craft.position).add(new THREE.Vector3(-36, 48, 22));
+        sun.position.copy(craft.position).add(scratch.set(-36, 48, 22));
         sun.target.position.copy(craft.position);
       }
       controls.minDistance = orbital ? 5000000 : 4.8;
@@ -358,12 +381,20 @@ export default function Scene({
       if(!orbital){const floor=terrainHeight(camera.position.x,camera.position.z)+.5;if(camera.position.y<floor)camera.position.y=floor;}
       orbitalMars.update(wallDt,camera,orbital);
       sky.update(camera, orbital?200000:altitude);
+      renderer.info.reset();
       renderer.render(world, camera);
       statsFrames++;submitTime+=performance.now()-renderStart;
-      if(now-statsStart>=1000){props.current.onPerformance?.({fps:statsFrames*1000/(now-statsStart),frameMs:(now-statsStart)/statsFrames,submitMs:submitTime/statsFrames,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,rover:lander.renderBudget});statsStart=now;statsFrames=0;submitTime=0;}
+      frameTimes.push(frameMs);
+      if(now-statsStart>=1000){
+        frameTimes.sort((a,b)=>a-b);
+        props.current.onPerformance?.({fps:statsFrames*1000/(now-statsStart),frameMs:(now-statsStart)/statsFrames,submitMs:submitTime/statsFrames,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,rover:lander.renderBudget,p95FrameMs:frameTimes[Math.floor((frameTimes.length-1)*.95)],p99FrameMs:frameTimes[Math.floor((frameTimes.length-1)*.99)],maxFrameMs:frameTimes.at(-1),longFrames:frameTimes.filter(t=>t>50).length});
+        statsStart=now;statsFrames=0;submitTime=0;frameTimes.length=0;
+      }
+      warmup.update();
     });
     return () => {
       disposed = true;
+      warmup.dispose();
       renderer.setAnimationLoop(null);
       observer.disconnect();
       controls.dispose();
@@ -377,7 +408,7 @@ export default function Scene({
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [live, runId]);
+  }, [live]);
   return (
     <div ref={host} className="scene-canvas">
       {error && (

@@ -1,12 +1,21 @@
 import {useEffect,useRef,useState} from "react";
 import {Simulation} from "./Simulation.js";
+import {createSnapshotDecoder} from "./snapshotTransport.js";
 export function useSimulation(){
   const [snapshot,setSnapshot]=useState(()=>new Simulation().snapshot()),live=useRef(snapshot);
   const [running,setRunning]=useState(false),[started,setStarted]=useState(false),[speed,setSpeed]=useState(1),[runId,setRunId]=useState(0),[scenario,setScenario]=useState("nominal");
   const worker=useRef(null),expected=useRef(0),lastUI=useRef(0),playing=useRef(false);
   useEffect(()=>{
+    const decoder=createSnapshotDecoder();let resyncPending=false;
     const w=new Worker(new URL("./simulation.worker.js",import.meta.url),{type:"module"});worker.current=w;
-    w.onmessage=({data})=>{if(data.runId!==expected.current)return;live.current=data.snapshot;playing.current=data.playing;setRunning(data.playing);if(performance.now()-lastUI.current>90||!data.playing){setSnapshot(data.snapshot);lastUI.current=performance.now();}};
+    w.onmessage=({data})=>{
+      if(data.runId!==expected.current)return;
+      const decoded=decoder.decode(data);
+      if(decoded.status==="gap"){if(!resyncPending){resyncPending=true;w.postMessage({type:"resync"});}return;}
+      if(decoded.status!=="ok")return;
+      resyncPending=false;live.current=decoded.snapshot;playing.current=data.playing;setRunning(data.playing);
+      if(performance.now()-lastUI.current>90||!data.playing){setSnapshot(decoded.snapshot);lastUI.current=performance.now();}
+    };
     return()=>w.terminate();
   },[]);
   function reset(next=scenario,options={}){expected.current++;playing.current=false;setRunning(false);setStarted(false);setScenario(next);setRunId(expected.current);const fresh=new Simulation(next,options).snapshot();live.current=fresh;setSnapshot(fresh);worker.current?.postMessage({type:"reset",scenario:next,options,runId:expected.current});}

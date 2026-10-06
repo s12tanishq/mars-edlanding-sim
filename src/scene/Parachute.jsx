@@ -85,8 +85,14 @@ export function createParachute() {
     releaseWind = new THREE.Vector3(),
     tiltX = 0,
     tiltZ = 0, angularX=0,angularZ=0;
+  const scratch=new THREE.Vector3();
   return {
     group,
+    reset(){
+      releasedPosition=null;releaseWind.set(0,0,0);tiltX=tiltZ=angularX=angularZ=0;
+      group.position.set(0,0,0);group.rotation.set(0,0,0);group.visible=false;
+      for(const {panel,base,velocities} of panels){panel.geometry.attributes.position.array.set(base);panel.geometry.attributes.position.needsUpdate=true;velocities.fill(0);}
+    },
     update(state, frame, position, wind, preview = false, pressure=0) {
       const v = deploymentVisual(frame),
         terminal = ["landed", "crashed"].includes(state.phase);
@@ -123,14 +129,14 @@ export function createParachute() {
           releaseWind.set(wind.x, 0, wind.z);
         }
         const t = v.releaseAge;
-        releaseWind.lerp(new THREE.Vector3(wind.x, 0, wind.z), 1 - Math.exp(-1.7 * frame.dt));
+        releaseWind.lerp(scratch.set(wind.x, 0, wind.z), 1 - Math.exp(-1.7 * frame.dt));
         // Keep the presentation relative to the descending vehicle so a 10x
         // replay cannot fling the cutaway hundreds of metres off camera in a
         // single visual second. The drift still follows the simulated wind.
         group.position
           .copy(position)
           .addScaledVector(releaseWind, t * 0.5 + t * t * 0.07)
-          .add(new THREE.Vector3(0, t * 7.5 + t * t * 1.2, 0));
+          .add(scratch.set(0, t * 7.5 + t * t * 1.2, 0));
       } else {
         releasedPosition = null;
         group.position.copy(position);
@@ -150,14 +156,15 @@ export function createParachute() {
       );
       materials.forEach((m) => (m.opacity = 1));
       lines.opacity = 0.72;
+      const pressureRipple=0.025+Math.min(1,pressure/100)*.14;
+      const windRipple=Math.min(1,Math.hypot(wind.x,wind.z)/12);
       for (const { panel, base, velocities } of panels) {
         const p = panel.geometry.attributes.position;
         for (let i = 0; i < p.count; i++) {
           const j = i * 3;
           const ripple =
             Math.sin(frame.clock * 3 + base[j] * 1.2 + base[j + 2]) *
-            (0.025+Math.min(1,pressure/100)*.14) *
-            Math.min(1, Math.hypot(wind.x, wind.z) / 12);
+            pressureRipple * windRipple;
           const target=base[j+1]+ripple;
           let y=p.getY(i);
           for(let s=0;s<steps;s++){velocities[j+1]+=(55*(target-y)-8*velocities[j+1])*dt;y+=velocities[j+1]*dt;}

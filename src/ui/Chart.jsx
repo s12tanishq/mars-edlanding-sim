@@ -1,4 +1,4 @@
-import React, { useId } from "react";
+import React, { useId, useMemo } from "react";
 import { number } from "./format.js";
 
 // SVG charts avoid another charting dependency. Inputs are recorded sim-time samples.
@@ -22,6 +22,7 @@ export default function Chart({
     top = 9,
     right = 8,
     bottom = 23;
+  const {xMax,yMax,line,area,sampled,project}=useMemo(()=>{
   const xMax = Math.max(1, ...data.map((p) => p[xKey]));
   const yMax = Math.max(maxY || 1, ...data.map((p) => p[yKey]));
   const step = Math.max(1, Math.floor(data.length / 250));
@@ -35,6 +36,8 @@ export default function Chart({
     sampled.length > 1
       ? `${left},${H - bottom} ${line} ${left + (sampled.at(-1)[xKey] / xMax) * (W - left - right)},${H - bottom}`
       : "";
+  return {xMax,yMax,line,area,sampled,project};
+  },[data,xKey,yKey,maxY]);
   return (
     <section className="chart-card" aria-label={title} id={id}>
       <div className="chart-title">

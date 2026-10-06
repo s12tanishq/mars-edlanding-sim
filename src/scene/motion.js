@@ -23,6 +23,7 @@ export function createVisualTimeline() {
     terminalAge = 0;
   const marks = new Map();
   return {
+    reset(){clock=0;previousTime=null;terminalAge=0;marks.clear();},
     update(snapshot, wallDt, briefing = false, playing) {
       const advances = previousTime !== null && snapshot.time > previousTime;
       let dt = (playing ?? advances) && !briefing ? Math.min(wallDt, 0.05) : 0;

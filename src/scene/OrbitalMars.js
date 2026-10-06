@@ -145,8 +145,10 @@ export function createOrbitalMars(map, pixelRatio = 1) {
   group.add(celestial);
 
   let elapsed = 0;
+  const head=new THREE.Vector3();
   return {
     group,
+    reset(){elapsed=0;planet.rotation.y=-0.2;},
     update(dt, camera, visible) {
       group.visible = visible;
       if (!visible) return;
@@ -157,7 +159,7 @@ export function createOrbitalMars(map, pixelRatio = 1) {
       for (const comet of comets) {
         const { origin, direction, phase } = comet.userData;
         const travel = (((elapsed * 0.006 + phase) % 1) - 0.5) * 720000;
-        const head = origin.clone().addScaledVector(direction, travel);
+        head.copy(origin).addScaledVector(direction, travel);
         const attribute = comet.geometry.attributes.position;
         for (let i = 0; i < attribute.count; i++) {
           const taper = i * 6500;
