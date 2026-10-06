@@ -1,0 +1,135 @@
+AREION — TEAM INDENTATION
+GITHUB SOURCE REPOSITORY UPLOAD GUIDE
+
+1. WHICH PROJECT TO USE
+
+Use the clean folder supplied as "areion-github". It contains the complete
+application source and all runtime assets. You can rename that folder.
+
+Upload the CONTENTS of this folder to the repository root. The root should show
+package.json, index.html, README.md, src/, and public/. Do not place another
+areion-github/ wrapper folder inside the repository.
+
+The ZIP is a convenient way to move the clean folder to another computer.
+Extract it first. Uploading the ZIP file to GitHub does not unpack its contents
+or create a browsable source repository.
+
+2. WHAT TO INCLUDE
+
+src/                         All React, rendering, physics and control code
+public/                      Rover models, Mars images, textures, local decoder
+scripts/                     Headless simulation and optional visual comparison
+tests/                       Regression tests; needed for npm test
+docs/                        Credits, validation and project guides
+package.json                 Commands and dependency versions
+package-lock.json            Reproducible dependency installation
+index.html                   Application entry page
+vite.config.js               Build configuration and deployment base path
+deployment.yaml              Existing submission/deployment metadata
+README.md                    Repository introduction and quick setup
+submission.md                Team's submission description
+RUN_SIMULATION_ON_ANY_LAPTOP.txt  Complete first-time setup instructions
+.gitignore                   Keeps generated/local files out of Git
+
+The tests and Markdown/TXT documentation are small. Keep them: they help judges
+and collaborators understand, validate and run the project. Preserve asset
+credits and public/draco/ license files.
+
+3. WHAT TO LEAVE OUT
+
+node_modules/                Installed packages; recreated with npm ci
+dist/                        Generated app; recreated with npm run build
+.creatorcode_builds/         Generated publishing archives
+.creatorcode*.json           Local extension/project metadata
+.DS_Store                    macOS Finder data
+.git/                        Internal Git history; never drag into web uploads
+Other project versions, local optimization archives, ZIPs, logs, editor settings
+and local .env files          Not part of the source submission
+
+These files still exist in the original workspace. Preparing this clean copy
+does not delete them.
+
+IMPORTANT: .gitignore affects Git/GitHub Desktop. GitHub's browser upload does
+not use it to filter a dragged folder. Use the clean copy for browser uploads.
+
+4. GITHUB'S LIMITS
+
+GitHub browser uploads allow up to 100 files in one upload and 25 MiB per file.
+The 100-file rule is not a permanent folder limit. Commit multiple batches to
+the same repository, or use GitHub Desktop/Git to push the complete source.
+
+This project's required assets are below 25 MiB each. Its original rover GLB
+is the largest required file, about 4.8 MiB. Git LFS is not needed for this build.
+
+Official sources:
+https://docs.github.com/en/repositories/working-with-files/managing-files/adding-a-file-to-a-repository
+https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github
+
+5. UPLOAD USING THE GITHUB WEBSITE
+
+Sign in to GitHub and open your repository. If you need a new repository,
+create one using GitHub's New repository page. Choose its visibility according
+to your submission requirements.
+
+For each batch below:
+  a. Open the repository ROOT, not a subfolder.
+  b. Select Add file > Upload files. An empty repository may instead show an
+     "uploading an existing file" link.
+  c. Drag the indicated folder/files from the clean copy into the upload area.
+     Drag folders to retain their internal paths. Do not select all files inside
+     a folder and flatten them into the root.
+  d. Review the filenames/paths, enter a short commit message, and commit the
+     batch to the branch you are using for the submission.
+  e. Return to the repository root before starting the next batch.
+
+Batch 1: Drag src/ only.             52 files
+Batch 2: Drag public/ only.          59 files
+Batch 3: Drag docs/, scripts/, tests/, and the root-level files listed in
+         section 2. This batch is under 100 files.
+
+The clean package has a hidden .gitignore. In Finder on macOS, press
+Command + Shift + . (period) to show hidden files. Add .gitignore in Batch 3.
+On Windows, enable hidden items in File Explorer if needed.
+
+If README.md already exists in your repository, uploading the supplied version
+will replace it when committed. Review that change before committing.
+
+After the three commits, check that the repository has both src/ and public/,
+the package files, the complete README, submission.md and .gitignore.
+
+6. ALTERNATIVE: GITHUB DESKTOP
+
+GitHub Desktop avoids the browser's upload batch limit.
+
+  a. Install GitHub Desktop from https://desktop.github.com/ and sign in.
+  b. Clone your GitHub repository to a local folder using GitHub Desktop.
+  c. Copy the CONTENTS of areion-github into that cloned folder, retaining
+     .gitignore. Keep the clone's existing .git folder in place.
+  d. Review the Changes list in GitHub Desktop. node_modules, dist and local
+     metadata should not appear.
+  e. Enter a commit summary such as "Add AREION final simulator" and commit.
+  f. Push the commit to your GitHub repository.
+
+You do not need to upload dependencies, compress models, or delete tests.
+
+7. VERIFY FROM A FRESH DOWNLOAD
+
+Download the repository's ZIP or clone it. Extract a downloaded ZIP, open the
+folder containing package.json in VS Code, and choose Terminal > New Terminal.
+
+After installing a supported Node.js version as explained in the setup TXT:
+
+    npm ci
+    npm test
+    npm run build
+    npm run dev -- --port 5174 --strictPort
+
+Open http://127.0.0.1:5174/ while the terminal server is running.
+
+npm ci downloads the pinned packages and recreates node_modules. npm run build
+recreates dist. All models, imagery and decoders are already in public/.
+The optional visual comparison script needs a separate original source copy;
+that archive is not needed for npm test, the build, or normal simulation.
+
+Uploading source to GitHub does not automatically publish a playable website.
+The repository link is suitable for source review and local setup.

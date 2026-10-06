@@ -8,33 +8,22 @@ For a first-time Windows, macOS, or Linux setup, follow [RUN_SIMULATION_ON_ANY_L
 
 ## Project location
 
-The complete runnable project is in:
-
-```text
-/Users/tanishqpachghare/Documents/Codex/2026-09-26/3-3d-scene-rendering-takes-physics/outputs/mars-edl-perseverance
-```
-
-The 3D scene files are in that folder's `src/scene/` directory. This directory is the complete final project; similarly named sibling folders are development history and are not part of the submission.
+The project root is the folder containing `package.json`, `index.html`, `src/`, and `public/`. Open that folder in VS Code. The 3D scene files are in its `src/scene/` directory. Other development copies and optimization archives are not needed to run this project.
 
 ## Preview locally
 
 Requirements: Node.js 22.12+ (22.x) or Node.js 24+, npm, and a current desktop browser with WebGL support. No API key or backend is required. An internet connection is needed to install dependencies; models, textures and the Draco decoder are bundled locally.
 
-In Terminal, open the project:
+Download/clone the repository, open its root in VS Code, and choose **Terminal → New Terminal**. Install the pinned dependencies, then start the preview:
 
 ```bash
-cd "/Users/tanishqpachghare/Documents/Codex/2026-09-26/3-3d-scene-rendering-takes-physics/outputs/mars-edl-perseverance"
-```
-
-For this existing workspace, dependencies are already available, so start the preview directly:
-
-```bash
+npm ci
 npm run dev -- --port 5174 --strictPort
 ```
 
 Open [the local demo](http://127.0.0.1:5174/) while that Terminal process is running. Stop it with Ctrl+C. The link is local to your computer, not a published website.
 
-For a fresh download or a teammate's copy, first run `npm ci` in the copied project folder, then the same preview command. The current workspace has a `node_modules` symlink to the baseline's installed dependencies. Do not include that symlink when sharing; a fresh copy should install its own dependencies. Application source and runtime assets do not otherwise require the baseline folder.
+`npm ci` recreates `node_modules` from `package-lock.json`. Installed dependencies and generated builds are excluded from Git. Application source and runtime assets do not require any other workspace folder.
 
 If port 5174 is occupied, use `npm run dev -- --port 5175 --strictPort` and open the address printed in Terminal. Do not double-click `index.html`: module loading, the simulation worker and asset paths require a web server. Keep browser hardware acceleration enabled for the 3D view.
 
@@ -108,11 +97,13 @@ npm run build
 npm run simulate -- nominal
 ```
 
-Replace `nominal` with `gusts`, `storm`, `sensor`, `engine`, or `fuel` for other headless runs. The documented desktop validation passed 26 tests and a production build; see [validation results and remaining checks](docs/VALIDATION.md). A Three.js bundle-size advisory is expected and is not a build failure. The fuel contingency is intentionally unsuccessful.
+Replace `nominal` with `gusts`, `storm`, `sensor`, `engine`, or `fuel` for other headless runs. The latest efficiency pass passed 32 tests and a production build; see [optimization checks](docs/OPTIMIZATION.md) and [earlier validation](docs/VALIDATION.md). A Three.js bundle-size advisory is expected and is not a build failure. The fuel contingency is intentionally unsuccessful.
 
 ## Sharing or submitting
 
-Share this entire project directory, excluding `node_modules` and optionally the generated `dist` directory. Keep `src`, `public`, `scripts`, `tests`, `docs`, both package files, `index.html`, `vite.config.js`, README and SUBMISSION. Preserve asset credits and decoder licenses. A recipient runs `npm ci` followed by the preview command above from their own copy's location.
+Commit `src`, `public`, `scripts`, `tests`, `docs`, both package files, `index.html`, `vite.config.js`, `deployment.yaml`, `README.md`, `submission.md`, the setup TXT, and `.gitignore`. Preserve asset credits and decoder licenses. Generated `node_modules`, `dist`, local extension metadata and build archives are excluded. A recipient runs `npm ci` followed by the preview command above from their own copy's location.
+
+For browser-upload batches or GitHub Desktop instructions, follow [the repository upload guide](docs/GITHUB_UPLOAD.txt). GitHub's browser limit is 100 files per upload, not per repository folder.
 
 The optional offline rover-optimization tooling is outside this project at workspace `work/asset-tools/optimize-rover.mjs`. It is not needed to install, build or run the demo; the optimized model is already bundled. Include that tooling separately only if handing off asset regeneration work.
 
